@@ -59,7 +59,6 @@ namespace DatabaseSchemaViewer
             }
         }
 
-
         private static void FillFunctions(TreeNode treeRoot, DatabaseSchema schema)
         {
             var root = new TreeNode("Functions");
@@ -74,7 +73,6 @@ namespace DatabaseSchemaViewer
                 FillArguments(node, function.Arguments);
             }
         }
-
 
         private static void FillPackages(TreeNode treeRoot, DatabaseSchema schema)
         {

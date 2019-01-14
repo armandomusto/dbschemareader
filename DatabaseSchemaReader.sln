@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatabaseSchemaViewer", "Dat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CopyToSQLite", "CopyToSQLite\CopyToSQLite.csproj", "{CE4A50D0-62F7-49A4-B216-7DEB7EA57147}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatabaseSchemaAdvanced", "DatabaseSchemaAdvanced\DatabaseSchemaAdvanced.csproj", "{927677D3-A27F-4F28-BED5-4515700A46C9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -107,8 +109,27 @@ Global
 		{CE4A50D0-62F7-49A4-B216-7DEB7EA57147}.Release|Any CPU.ActiveCfg = Release|x86
 		{CE4A50D0-62F7-49A4-B216-7DEB7EA57147}.Release|x86.ActiveCfg = Release|x86
 		{CE4A50D0-62F7-49A4-B216-7DEB7EA57147}.Release|x86.Build.0 = Release|x86
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.Debug|x86.Build.0 = Debug|Any CPU
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.Net4|Any CPU.ActiveCfg = Release|Any CPU
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.Net4|Any CPU.Build.0 = Release|Any CPU
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.Net4|x86.ActiveCfg = Release|Any CPU
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.Net4|x86.Build.0 = Release|Any CPU
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.net45|Any CPU.ActiveCfg = Release|Any CPU
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.net45|Any CPU.Build.0 = Release|Any CPU
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.net45|x86.ActiveCfg = Release|Any CPU
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.net45|x86.Build.0 = Release|Any CPU
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.Release|x86.ActiveCfg = Release|Any CPU
+		{927677D3-A27F-4F28-BED5-4515700A46C9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9A250EC9-A7EE-4459-BEA0-520AFE674D2C}
 	EndGlobalSection
 EndGlobal
