@@ -52,22 +52,6 @@
                 "System.Xml.Linq": "4.0.0.0",
                 "System.Data.DataSetExtensions": "4.0.0.0"
             }
-        },
-        "net40": {
-            "frameworkAssemblies": {
-                "System.Data": "4.0.0.0",
-                "System.Xml": "4.0.0.0",
-                "System.Xml.Linq": "4.0.0.0",
-                "System.Data.DataSetExtensions": "4.0.0.0"
-            }
-        },
-        "net35": {
-            "frameworkAssemblies": {
-                "System.Data": "2.0.0.0",
-                "System.Xml": "2.0.0.0",
-                "System.Xml.Linq": "3.5.0.0",
-                "System.Data.DataSetExtensions": "3.5.0.0"
-            }
         }
     }
 }
