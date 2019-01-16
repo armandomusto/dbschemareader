@@ -183,7 +183,7 @@ namespace DatabaseSchemaViewer
                 errorProvider1.SetError(ConnectionString, "Invalid connection string");
                 return false;
             }
-            catch (ConfigurationErrorsException)
+            catch (ConfigurationErrorsException ex)
             {
                 errorProvider1.SetError(DataProviders, "This provider isn't available");
                 return false;

@@ -17,13 +17,13 @@ namespace DatabaseSchemaAdvanced.Helper
             List<NodeItem> list = new List<NodeItem>();
             foreach( var schemaObj in schema.Schemas)
             {
-                NodeItem treeRoot = new NodeItem() { Type = "Schema", Title = schemaObj.Name };
+                NodeItem treeRoot = new NodeItem(NodeType.Schema) { Name = schemaObj.Name };
                 list.Add(treeRoot);
                 FillTables(treeRoot, schema);
             }
             if(schema.Schemas.Count == 0)
             {
-                NodeItem treeRoot = new NodeItem() { Type = "Schema", Title = "Schema" };
+                NodeItem treeRoot = new NodeItem(NodeType.Schema) {Name = "Schema" };
                 list.Add(treeRoot);
                 FillTables(treeRoot, schema);
             }
@@ -151,7 +151,7 @@ namespace DatabaseSchemaAdvanced.Helper
 
         private static void FillTables(NodeItem treeRoot, DatabaseSchema schema)
         {
-            var tableRoot = new NodeItem() { Title = "Tables" };
+            var tableRoot = new NodeItem(NodeType.Tables) {Schema=treeRoot.Name, Name = "Tables" };
             //tableRoot.Tag = schema;
             //tableRoot.ToolTipText = RightClickToScript;
             treeRoot.Items.Add(tableRoot);
@@ -160,7 +160,7 @@ namespace DatabaseSchemaAdvanced.Helper
             {
                 var name = table.Name;
                 if (!string.IsNullOrEmpty(table.SchemaOwner)) name = table.SchemaOwner + "." + name;
-                var tableNode = new NodeItem() { Title = name, Type = "Table" };
+                var tableNode = new NodeItem(NodeType.Table) { Name = name, Schema = treeRoot.Name };
                 //tableNode.Tag = table;
                 //tableNode.ToolTipText = RightClickToScript;
                 tableRoot.Items.Add(tableNode);
@@ -258,48 +258,8 @@ namespace DatabaseSchemaAdvanced.Helper
         {
             var sb = new StringBuilder();
             sb.Append(column.Name);
-            sb.Append(" ");
-
-            sb.Append(column.DataTypeDefinition());
-
-            if (!column.Nullable)
-            {
-                sb.Append(" NOT NULL");
-            }
-            if (column.IsPrimaryKey)
-            {
-                sb.Append(" PK");
-            }
-            if (column.IsAutoNumber)
-            {
-                //identity or autonumber
-                if (column.IdentityDefinition != null)
-                {
-                    sb.Append(" Identity");
-                    if (column.IdentityDefinition.IsNonTrivialIdentity())
-                    {
-                        sb.Append('(');
-                        sb.Append(column.IdentityDefinition.IdentitySeed);
-                        sb.Append(',');
-                        sb.Append(column.IdentityDefinition.IdentityIncrement);
-                        sb.Append(')');
-                    }
-                }
-                else
-                {
-                    sb.Append(" AutoNumber");
-                }
-            }
-            if (column.IsForeignKey)
-            {
-                sb.Append(" FK to " + column.ForeignKeyTableName);
-            }
-            var colNode = new NodeItem() { Title = sb.ToString(), Type = "Column", Description = column.Description };
-            //if (!(column.Table is DatabaseView))
-            //{
-            //    colNode.Tag = column;
-            //    colNode.ToolTipText = RightClickToScript;
-            //}
+            var colNode = new NodeItem(NodeType.Column) { Name = sb.ToString(), Description = column.Description,
+                Schema = tableNode.Schema, Table = tableNode.Name };
             tableNode.Items.Add(colNode);
         }
     }

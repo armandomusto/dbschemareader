@@ -7,15 +7,30 @@ using System.Threading.Tasks;
 
 namespace DatabaseSchemaAdvanced.Model
 {
+    public enum NodeType
+    {
+        Schema,
+        Tables,
+        Table,
+        Column
+    }
     public class NodeItem
     {
-        public string Title { get; set; }
+        public string Schema { get; set; }
+        public string Table { get; set; }
+        public string Name { get; set; }
         public string Description { get; set; }
-        public string Type { get; set; }
+        /// <summary>
+        /// TABLE
+        /// COLUMN
+        /// </summary>
+        public NodeType Type { get; private set; }
+        public bool IsNew { get; set; }
         public ObservableCollection<NodeItem> Items { get; set; }
 
-        public NodeItem()
+        public NodeItem(NodeType type)
         {
+            Type = type;
             this.Items = new ObservableCollection<NodeItem>();
         }
     }

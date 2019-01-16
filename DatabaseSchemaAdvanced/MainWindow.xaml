@@ -5,10 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DatabaseSchemaAdvanced"
         xmlns:model="clr-namespace:DatabaseSchemaAdvanced.Model"
-        mc:Ignorable="d"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+        xmlns:helpers="clr-namespace:DatabaseSchemaAdvanced.Helper"
+        WindowState="Maximized" WindowStyle="ThreeDBorderWindow"
+        xmlns:conv="clr-namespace:DatabaseSchemaAdvanced.Converters"
+        mc:Ignorable="d" 
         DataContext="{Binding Main, Source={StaticResource Locator}}"
-        Title="MainWindow" Height="450" Width="800">
+        Title=".::Database Schema Reader Advanced::." Height="450" Width="800">
     <Window.Resources>
+        <conv:TrueToFalseConverter x:Key="FalseConverter"/>
         <Style TargetType="TextBlock">
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="FontSize" Value="14"/>
@@ -17,12 +22,14 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="50"/>
-            <RowDefinition Height="100"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition/>
             <RowDefinition Height="30"/>
         </Grid.RowDefinitions>
         <Grid Grid.Row="1" Name="ConectionPanel" Margin="10">
             <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition Height="5"/>
                 <RowDefinition/>
                 <RowDefinition Height="5"/>
                 <RowDefinition/>
@@ -46,31 +53,84 @@
                 <TextBlock Width="75">Database</TextBlock>
                 <TextBox Margin="10 0 0 0" Text="{Binding Database}"/>
             </DockPanel>
+            <DockPanel Grid.Row="6" Grid.Column="0">
+                <TextBlock Width="75">Owner</TextBlock>
+                <TextBox Margin="10 0 0 0" Text="{Binding SchemaOwner}"/>
+            </DockPanel>
             <DockPanel Margin="5 0 0 0" Grid.Row="0" Grid.Column="1">
                 <CheckBox VerticalAlignment="Center" FontSize="14" IsChecked="{Binding TrustedConnection}">Trusted connection</CheckBox>
             </DockPanel>
             <DockPanel Margin="5 0 0 0" Grid.Row="2" Grid.Column="1">
                 <TextBlock Width="75">User</TextBlock>
-                <TextBox Margin="10 0 0 0" Text="{Binding User}"/>
+                <TextBox Margin="10 0 0 0" Text="{Binding User}" IsEnabled="{Binding TrustedConnection, Converter={StaticResource FalseConverter}}" />
             </DockPanel>
             <DockPanel Margin="5 0 0 0" Grid.Row="4" Grid.Column="1">
                 <TextBlock Width="75">Password</TextBlock>
-                <TextBox Margin="10 0 0 0" Text="{Binding Password}"/>
+                <TextBox Margin="10 0 0 0" Text="{Binding Password}" IsEnabled="{Binding TrustedConnection, Converter={StaticResource FalseConverter}}"/>
             </DockPanel>
-            <Button Grid.Column="2" Width="100" FontSize="14" Command="{Binding ReadSchemaCommand}">Read schema</Button>
+            <Button Grid.Column="2" Width="150" FontSize="14" HorizontalAlignment="Left" Command="{Binding ReadSchemaCommand}">Read schema from DB</Button>
         </Grid>
         <Grid Grid.Row="2" Name="SchemaPanel" Margin="10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
+                <ColumnDefinition Width="0.3*"/>
+                <ColumnDefinition Width="20"/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <TreeView Name="trvMenu" ItemsSource="{Binding Schemas}">
+            <TreeView ItemsSource="{Binding Schemas}">
+                <i:Interaction.Behaviors>
+                    <helpers:BindableSelectedItemBehavior SelectedItem="{Binding SelectedNodeItem, Mode=TwoWay}" />
+                </i:Interaction.Behaviors>
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate DataType="{x:Type model:NodeItem}" ItemsSource="{Binding Items}">
-                        <TextBlock Text="{Binding Title}" />
+                        <TextBlock Text="{Binding Name}" />
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
             </TreeView>
+            <Grid Grid.Column="2" Name="TablePanel">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="0.3*" MinWidth="100"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <Label Content="{Binding SelectedTable.Name}" Grid.ColumnSpan="2" FontSize="16"/>
+                    <Label Content="Column name" Grid.Row="1"/>
+                    <Label Grid.Column="1" Grid.Row="1" Content="Column description"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="1">
+                        <Button Command="{Binding ExportToCsvCommand}">Export Schema to CSV</Button>
+                        <Button Command="{Binding UpdateSchemaCommand}" Margin="20 0 0 0">Update dabase schema</Button>
+                    </StackPanel>
+                </Grid>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Grid.Column="1" Grid.Row="1">
+                    <ItemsControl ItemsSource="{Binding Path=SelectedTable.Items}"  BorderBrush="Black" BorderThickness="1">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="0.3*" MinWidth="100"/>
+                                        <ColumnDefinition/>
+                                    </Grid.ColumnDefinitions>
+                                    <Label Content="{Binding Name}" />
+                                    <TextBox Grid.Column="1" Text="{Binding Description}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Vertical"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+           
         </Grid>
     </Grid>
 </Window>
