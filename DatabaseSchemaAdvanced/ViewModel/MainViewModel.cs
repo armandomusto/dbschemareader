@@ -12,6 +12,7 @@ using System.Data.Common;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Configuration;
+using Microsoft.Win32;
 
 namespace DatabaseSchemaAdvanced.ViewModel
 {
@@ -60,6 +61,8 @@ namespace DatabaseSchemaAdvanced.ViewModel
 
         #region Commands
         public RelayCommand ReadSchemaCommand { get; }
+        public RelayCommand UpdateSchemaCommand { get; }
+        public RelayCommand ExportToCsvCommand { get; set; }
         #endregion
 
         /// <summary>
@@ -81,8 +84,34 @@ namespace DatabaseSchemaAdvanced.ViewModel
             SchemaOwner = Properties.Settings.Default.SchemaOwner;
             TrustedConnection = Properties.Settings.Default.TrustedConnection;
             ReadSchemaCommand = new RelayCommand(ReadSchema);
+            UpdateSchemaCommand = new RelayCommand(UpdateSchema);
+            ExportToCsvCommand = new RelayCommand(ExportToCsv);
         }
 
+        private void ExportToCsv()
+        {
+            List<NodeItem> columns = Schemas.Flatten(a => a.Items).Where(a => a.Type == NodeType.Column).ToList();
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.Filter = "CSV file|*.csv";
+            if(dialog.ShowDialog().Value)
+            {
+                _dataService.ExportSchemaToCsv(columns, dialog.FileName);
+            }
+        }
+
+        private bool CanUpdateSchema()
+        {
+            return IsConnectionStringValid();
+        }
+
+        private void UpdateSchema()
+        {
+            //var rdr = new DatabaseReader(ConnectionString, SelectedDbProvider.Provider);
+            //rdr.
+            List<NodeItem> columns = Schemas.Flatten(a => a.Items).Where(a => a.Type == NodeType.Column).ToList();
+            _dataService.SetColumnsDescriptionProperties(ConnectionString, columns, SelectedDbProvider.Type);
+        }
+        
         private void ReadSchema()
         {
             
@@ -125,7 +154,7 @@ namespace DatabaseSchemaAdvanced.ViewModel
         private Task GetSchema()
         {
             var rdr = new DatabaseReader(ConnectionString, SelectedDbProvider.Provider);
-            rdr.Owner = "public";
+            rdr.Owner = SchemaOwner;
             _databaseSchema = rdr.ReadAll();
             Schemas = new ObservableCollection<NodeItem>(SchemaToTree.GenerateTreeList(_databaseSchema));
             RaisePropertyChanged(() => Schemas);
