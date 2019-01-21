@@ -80,6 +80,12 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="Thinktecture.RpcBridge">
+      <HintPath>..\..\TWLibs\Thinktecture.RpcBridge.dll</HintPath>
+    </Reference>
+    <Reference Include="TW.Saga.Core.Base">
+      <HintPath>..\..\TWLibs\TW.Saga.Core.Base.dll</HintPath>
+    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -89,6 +95,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Converters\DbProviderToVisibilityConverter.cs" />
     <Compile Include="Converters\TrueToFalseConverter.cs" />
     <Compile Include="Helper\BindableSelectedItemBehavior.cs" />
     <Compile Include="Helper\LinqExtensions.cs" />
@@ -140,6 +147,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\WPF-SearchTextBox\SearchTextBox\SearchTextBox.csproj">
+      <Project>{ce4e20c4-1aef-4739-9de8-d28f278adf0e}</Project>
+      <Name>SearchTextBox</Name>
+    </ProjectReference>
     <ProjectReference Include="..\DatabaseSchemaReader\DatabaseSchemaReader.csproj">
       <Project>{8280afb4-9066-4656-a80e-23b859e5299c}</Project>
       <Name>DatabaseSchemaReader</Name>

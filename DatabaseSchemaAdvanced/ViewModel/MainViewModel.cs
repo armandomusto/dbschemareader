@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Configuration;
 using Microsoft.Win32;
+using log4net.Repository.Hierarchy;
 
 namespace DatabaseSchemaAdvanced.ViewModel
 {
@@ -63,6 +64,7 @@ namespace DatabaseSchemaAdvanced.ViewModel
         public RelayCommand ReadSchemaCommand { get; }
         public RelayCommand UpdateSchemaCommand { get; }
         public RelayCommand ExportToCsvCommand { get; set; }
+        public RelayCommand ImportFromCsvCommand { get; set; }
         #endregion
 
         /// <summary>
@@ -70,6 +72,7 @@ namespace DatabaseSchemaAdvanced.ViewModel
         /// </summary>
         public MainViewModel(IDataService dataService)
         {
+            Logging.Logger.append("Start application", Logging.Logger.INFO);
             _dataService = dataService;
             //Initialize databases
             DbProviders = new List<DbProvider>();
@@ -86,6 +89,30 @@ namespace DatabaseSchemaAdvanced.ViewModel
             ReadSchemaCommand = new RelayCommand(ReadSchema);
             UpdateSchemaCommand = new RelayCommand(UpdateSchema);
             ExportToCsvCommand = new RelayCommand(ExportToCsv);
+            ImportFromCsvCommand = new RelayCommand(ImportFromCsv);
+        }
+
+        private void ImportFromCsv()
+        {
+            if(_databaseSchema != null)
+            {
+                OpenFileDialog dialog = new OpenFileDialog();
+                dialog.Filter = "CSV file|*.csv";
+                if (dialog.ShowDialog().Value)
+                {
+                    List<NodeItem> columns = _dataService.ImportSchemaFromCsv(dialog.FileName);
+                    var tables = columns.GroupBy(a => a.Table);
+                    foreach(var table in tables)
+                    {
+                        foreach(var column in table)
+                        {
+                            var node = Schemas.Flatten(a => a.Items).Where(a => a.Type == NodeType.Column).FirstOrDefault( a => a.Name == column.Name);
+                            node.Description = column.Description;
+                        }
+                    }
+                    RaisePropertyChanged(() => Schemas);
+                }
+            }
         }
 
         private void ExportToCsv()
@@ -114,40 +141,38 @@ namespace DatabaseSchemaAdvanced.ViewModel
         
         private void ReadSchema()
         {
-            
-            //Create connection string
-            if(SelectedDbProvider != null)
-            {
-                if(SelectedDbProvider.Type == DbProvider.SQLSERVER)
-                {
-                    if(TrustedConnection)
-                    {
-                        ConnectionString = string.Format("Data Source={0};Initial Catalog={1};Trusted_Connection=True;", Host, Database);
-                    }
-                    else
-                    {
-                        ConnectionString = string.Format("Server={0};Database={1};User Id={2};Password={3}", Host, Database,User,Password);
-                    }
-                }
-                if (SelectedDbProvider.Type == DbProvider.POSTGRESQL)
-                {
-                    ConnectionString = string.Format("Host={0};Database={1};User Id={2};Password={3}; Minimum Pool Size=0; Command Timeout=0;", Host, Database, User, Password);
-                }
-                if (!IsConnectionStringValid())
-                    return;
-                Task tsk = new Task(async () => 
-                {
-                    await GetSchema();
-                });
-                tsk.Start();
-            }
             try
             {
-
+                //Create connection string
+                if (SelectedDbProvider != null)
+                {
+                    if (SelectedDbProvider.Type == DbProvider.SQLSERVER)
+                    {
+                        if (TrustedConnection)
+                        {
+                            ConnectionString = string.Format("Data Source={0};Initial Catalog={1};Trusted_Connection=True;", Host, Database);
+                        }
+                        else
+                        {
+                            ConnectionString = string.Format("Server={0};Database={1};User Id={2};Password={3}", Host, Database, User, Password);
+                        }
+                    }
+                    if (SelectedDbProvider.Type == DbProvider.POSTGRESQL)
+                    {
+                        ConnectionString = string.Format("Host={0};Database={1};User Id={2};Password={3}; Minimum Pool Size=0; Command Timeout=0;", Host, Database, User, Password);
+                    }
+                    if (!IsConnectionStringValid())
+                        return;
+                    Task tsk = new Task(async () =>
+                    {
+                        await GetSchema();
+                    });
+                    tsk.Start();
+                }
             }
             catch (Exception ex)
             {
-
+                //Logging.Logger.append(ex.Message, Logging.Logger.ERROR);
             }
         }
 
@@ -170,43 +195,52 @@ namespace DatabaseSchemaAdvanced.ViewModel
         }
         private bool IsConnectionStringValid()
         {
-            if (string.IsNullOrEmpty(ConnectionString))
-            {
-                //errorProvider1.SetError(ConnectionString, "Should not be empty");
-                return false;
-            }
             try
             {
-                var factory = DbProviderFactories.GetFactory(SelectedDbProvider.Provider);
-                var csb = factory.CreateConnectionStringBuilder();
-                csb.ConnectionString = ConnectionString;
+                if (string.IsNullOrEmpty(ConnectionString))
+                {
+                    //errorProvider1.SetError(ConnectionString, "Should not be empty");
+                    return false;
+                }
+                try
+                {
+                    var factory = DbProviderFactories.GetFactory(SelectedDbProvider.Provider);
+                    var csb = factory.CreateConnectionStringBuilder();
+                    csb.ConnectionString = ConnectionString;
+                }
+                catch (NotSupportedException)
+                {
+                    //errorProvider1.SetError(ConnectionString, "Invalid connection string");
+                    return false;
+                }
+                catch (ArgumentException)
+                {
+                    //errorProvider1.SetError(ConnectionString, "Invalid connection string");
+                    return false;
+                }
+                catch (ConfigurationErrorsException)
+                {
+                    //errorProvider1.SetError(DataProviders, "This provider isn't available");
+                    return false;
+                }
+                Properties.Settings.Default.DbProvider = SelectedDbProvider.Type;
+                Properties.Settings.Default.HostName = Host;
+                Properties.Settings.Default.Database = Database;
+                Properties.Settings.Default.UserName = User;
+                Properties.Settings.Default.Password = Password;
+                Properties.Settings.Default.SchemaOwner = SchemaOwner;
+                Properties.Settings.Default.TrustedConnection = TrustedConnection;
+                Properties.Settings.Default.Save();
+                //errorProvider1.SetError(DataProviders, string.Empty);
+                //errorProvider1.SetError(ConnectionString, string.Empty);
+                return true;
             }
-            catch (NotSupportedException)
+            catch(Exception ex)
             {
-                //errorProvider1.SetError(ConnectionString, "Invalid connection string");
+                //Logging.Logger.append(ex.Message, Logging.Logger.ERROR);
                 return false;
             }
-            catch (ArgumentException)
-            {
-                //errorProvider1.SetError(ConnectionString, "Invalid connection string");
-                return false;
-            }
-            catch (ConfigurationErrorsException)
-            {
-                //errorProvider1.SetError(DataProviders, "This provider isn't available");
-                return false;
-            }
-            Properties.Settings.Default.DbProvider = SelectedDbProvider.Type;
-            Properties.Settings.Default.HostName = Host;
-            Properties.Settings.Default.Database = Database;
-            Properties.Settings.Default.UserName = User;
-            Properties.Settings.Default.Password = Password;
-            Properties.Settings.Default.SchemaOwner = SchemaOwner;
-            Properties.Settings.Default.TrustedConnection = TrustedConnection;
-            Properties.Settings.Default.Save();
-            //errorProvider1.SetError(DataProviders, string.Empty);
-            //errorProvider1.SetError(ConnectionString, string.Empty);
-            return true;
+            
         }
     }
 }

@@ -33,7 +33,21 @@ namespace DatabaseSchemaAdvanced.Service
             {
                 using (var csv = new CsvReader(reader))
                 {
-                    return new List<NodeItem>(csv.GetRecords<NodeItem>());
+                    //return new List<NodeItem>(csv.GetRecords<NodeItem>());
+                    var records = new List<NodeItem>();
+                    csv.Read();
+                    csv.ReadHeader();
+                    while (csv.Read())
+                    {
+                        var record = new NodeItem(NodeType.Column)
+                        {
+                            Table = csv.GetField("Table"),
+                            Name = csv.GetField("Column"),
+                            Description = csv.GetField("Description"),
+                        };
+                        records.Add(record);
+                    }
+                    return records;
                 }
             }
         }
