@@ -172,7 +172,7 @@ namespace DatabaseSchemaReader
         {
             return ReadAll(CancellationToken.None);
         }
-
+        
         /// <summary>
         /// Gets all of the schema in one call.
         /// </summary>
@@ -198,6 +198,27 @@ namespace DatabaseSchemaReader
 
                 if (ct.IsCancellationRequested) return _db;
                 AllSequences();
+            }
+            _fixUp = true;
+            UpdateReferences();
+
+            return _db;
+        }
+        /// <summary>
+        /// Return only tables and views
+        /// </summary>
+        /// <param name="ct"></param>
+        /// <returns></returns>
+        public DatabaseSchema ReadAllTablesAndViews(CancellationToken ct)
+        {
+            _fixUp = false;
+            using (_readerAdapter.CreateConnection())
+            {
+                if (ct.IsCancellationRequested) return _db;
+                AllTables(ct);
+
+                if (ct.IsCancellationRequested) return _db;
+                AllViews(ct);
             }
             _fixUp = true;
             UpdateReferences();

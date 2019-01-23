@@ -25,5 +25,25 @@ namespace DatabaseSchemaAdvanced
         {
             InitializeComponent();
         }
+
+        private void SearchTextBox_Search(object sender, RoutedEventArgs e)
+        {
+            string filter = ((TextBox)e.Source).Text;
+            if(treeviewSchema.Items.Count > 0 && filter != null && filter.Length > 2)
+            {
+                NodeItem root = treeviewSchema.Items[0] as NodeItem;
+                if(root.Items[0] != null && root.Items[0].Items != null)
+                {
+                    foreach (var item in root.Items[0].Items)
+                    {
+                        if (((NodeItem)item).Type == NodeType.Table && ((NodeItem)item).Name.Contains(filter))
+                        {
+                            ((NodeItem)item).IsSelected = true;
+                            return;
+                        }
+                    }
+                }
+            }
+        }
     }
 }

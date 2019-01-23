@@ -14,6 +14,8 @@ using System.Linq;
 using System.Configuration;
 using Microsoft.Win32;
 using log4net.Repository.Hierarchy;
+using System.Windows.Threading;
+using System.Windows;
 
 namespace DatabaseSchemaAdvanced.ViewModel
 {
@@ -43,6 +45,9 @@ namespace DatabaseSchemaAdvanced.ViewModel
         string _schemaOwner;
         NodeItem _selectedNode;
         NodeItem _selectedTable;
+        bool _isLoadingSchema;
+        bool _isSchemaLoaded;
+        string _filter;
 
         #region Parameters
         public List<DbProvider> DbProviders { get; set; }
@@ -57,7 +62,9 @@ namespace DatabaseSchemaAdvanced.ViewModel
         public ObservableCollection<NodeItem> Schemas { get; set; }
         public NodeItem SelectedNodeItem { get { return _selectedNode; } set { Set<NodeItem>(ref _selectedNode, value, "SelectedNodeItem"); ShowTable(); } }
         public NodeItem SelectedTable { get { return _selectedTable; } set { Set<NodeItem>(ref _selectedTable, value, "SelectedTable");} }
-
+        public bool IsLoadingSchema { get { return _isLoadingSchema; } set { Set<bool>(ref _isLoadingSchema, value, "IsLoadingSchema"); } }
+        public bool IsSchemaLoaded { get { return _isSchemaLoaded; } set { Set<bool>(ref _isSchemaLoaded, value, "IsSchemaLoaded"); } }
+        public string Filter { get { return _filter; } set { Set<string>(ref _filter, value, "Filter");} }
         #endregion
 
         #region Commands
@@ -65,6 +72,7 @@ namespace DatabaseSchemaAdvanced.ViewModel
         public RelayCommand UpdateSchemaCommand { get; }
         public RelayCommand ExportToCsvCommand { get; set; }
         public RelayCommand ImportFromCsvCommand { get; set; }
+        public RelayCommand SearchTableCommand { get; set; }
         #endregion
 
         /// <summary>
@@ -90,6 +98,20 @@ namespace DatabaseSchemaAdvanced.ViewModel
             UpdateSchemaCommand = new RelayCommand(UpdateSchema);
             ExportToCsvCommand = new RelayCommand(ExportToCsv);
             ImportFromCsvCommand = new RelayCommand(ImportFromCsv);
+            SearchTableCommand = new RelayCommand(SearchTable);
+        }
+
+        private void SearchTable()
+        {
+            SelectedNodeItem = Schemas.Flatten(a => a.Items).Where(a => a.Type == NodeType.Table).ToList().FirstOrDefault(a => a.Name.Contains(Filter));
+        }
+
+        private bool CanExportToCsv()
+        {
+            if (Schemas != null && Schemas.Count > 0)
+                return true;
+            else
+                return false;
         }
 
         private void ImportFromCsv()
@@ -111,6 +133,9 @@ namespace DatabaseSchemaAdvanced.ViewModel
                         }
                     }
                     RaisePropertyChanged(() => Schemas);
+                    ExportToCsvCommand.RaiseCanExecuteChanged();
+                    ImportFromCsvCommand.RaiseCanExecuteChanged();
+                    UpdateSchemaCommand.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -163,6 +188,8 @@ namespace DatabaseSchemaAdvanced.ViewModel
                     }
                     if (!IsConnectionStringValid())
                         return;
+                    if (Schemas != null)
+                        Schemas.Clear();
                     Task tsk = new Task(async () =>
                     {
                         await GetSchema();
@@ -178,12 +205,37 @@ namespace DatabaseSchemaAdvanced.ViewModel
 
         private Task GetSchema()
         {
+            IsLoadingSchema = true;
+            IsSchemaLoaded = false;
+            
             var rdr = new DatabaseReader(ConnectionString, SelectedDbProvider.Provider);
             rdr.Owner = SchemaOwner;
-            _databaseSchema = rdr.ReadAll();
-            Schemas = new ObservableCollection<NodeItem>(SchemaToTree.GenerateTreeList(_databaseSchema));
-            RaisePropertyChanged(() => Schemas);
+            //rdr.ReaderProgress += Rdr_ReaderProgress;
+            //_databaseSchema = rdr.ReadAll();
+            try
+            {
+                _databaseSchema = rdr.ReadAllTablesAndViews(CancellationToken.None);
+                Schemas = new ObservableCollection<NodeItem>(SchemaToTree.GenerateTreeList(_databaseSchema));
+                if (Schemas != null && Schemas.Count > 0)
+                    IsSchemaLoaded = true;
+                //IList<DatabaseTable> tables = rdr.AllTables();
+                //Schemas = new ObservableCollection<NodeItem>(SchemaToTree.GenerateTreeList(tables));
+                RaisePropertyChanged(() => Schemas);
+                IsLoadingSchema = false;
+            }
+            catch (Exception ex)
+            {
+                IsLoadingSchema = false;
+                IsSchemaLoaded = false;
+                MessageBox.Show(ex.Message);
+            }
+            
             return new Task<bool>(() => true);
+        }
+
+        private void Rdr_ReaderProgress(object sender, ReaderEventArgs e)
+        {
+            
         }
 
         private void ShowTable()

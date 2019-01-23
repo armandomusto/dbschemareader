@@ -14,6 +14,7 @@
         DataContext="{Binding Main, Source={StaticResource Locator}}"
         Title=".::Database Schema Reader Advanced::." Height="600" Width="800">
     <Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <conv:TrueToFalseConverter x:Key="FalseConverter"/>
         <conv:DbProviderToVisibilityConverter x:Key="DbProviderVisibilityConverter"/>
         <Style TargetType="TextBlock">
@@ -89,8 +90,10 @@
             </Grid>
         </GroupBox>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="10 0 0 0">
-            <Button Command="{Binding ExportToCsvCommand}">Export Schema to CSV</Button>
+        <ProgressBar Grid.Row="2" Height="5" Margin="10 0 10 0" HorizontalAlignment="Stretch" Visibility="{Binding IsLoadingSchema, Converter={StaticResource BoolToVisibilityConverter}}" IsIndeterminate="True"></ProgressBar>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="10 0 0 0" Visibility="{Binding IsSchemaLoaded, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Button Command="{Binding ExportToCsvCommand}" Margin="10 0 0 0" >Export Schema to CSV</Button>
             <Button Command="{Binding ImportFromCsvCommand}" Margin="10 0 0 0">Import descriptions from CSV</Button>
             <Button Command="{Binding UpdateSchemaCommand}" Margin="10 0 0 0">Update dabase schema</Button>
         </StackPanel>
@@ -106,14 +109,19 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <GroupBox Grid.Row="1" Header="Tables" FontSize="14">
-                <StackPanel>
-                    <search:SearchTextBox Text="{Binding Filter}" Margin="5" ></search:SearchTextBox>
-                    <TreeView ItemsSource="{Binding Schemas}" Grid.Row="1" FontSize="14" BorderThickness="0">
-                        <!--<TreeView.ItemContainerStyle>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <search:SearchTextBox Text="{Binding Filter}" Margin="5" Search="SearchTextBox_Search"></search:SearchTextBox>
+                    <TreeView Name="treeviewSchema" ItemsSource="{Binding Schemas}" Grid.Row="1" FontSize="14" BorderThickness="0">
+                        <TreeView.ItemContainerStyle>
                         <Style TargetType="{x:Type TreeViewItem}">
-                            <Setter Property="IsExpanded" Value="True" />
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                         </Style>
-                    </TreeView.ItemContainerStyle>-->
+                    </TreeView.ItemContainerStyle>
                         <i:Interaction.Behaviors>
                             <helpers:BindableSelectedItemBehavior SelectedItem="{Binding SelectedNodeItem, Mode=TwoWay}" />
                         </i:Interaction.Behaviors>
@@ -123,11 +131,11 @@
                             </HierarchicalDataTemplate>
                         </TreeView.ItemTemplate>
                     </TreeView>
-                </StackPanel>
+                </Grid>
                     
                 </GroupBox>
 
-                <GroupBox Grid.Column="2" Header="{Binding SelectedTable.Name}" Grid.Row="1" FontSize="14">
+                <GroupBox Grid.Column="2" Header="{Binding SelectedTable.Name,FallbackValue=Selected table}" Grid.Row="1" FontSize="14">
                     <Grid Grid.Column="2" Name="TablePanel" Grid.Row="1">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,8 +16,12 @@ namespace DatabaseSchemaAdvanced.Model
         Table,
         Column
     }
-    public class NodeItem
+
+    public class NodeItem : INotifyPropertyChanged
     {
+        bool _isSelected;
+        bool _isExpanded;
+
         [Ignore]
         public string Schema { get; set; }
         [Name("Table"), Index(1)]
@@ -35,11 +40,19 @@ namespace DatabaseSchemaAdvanced.Model
         public bool IsNew { get; set; }
         [Ignore]
         public List<NodeItem> Items { get; set; }
+        [Ignore]
+        public bool IsSelected { get { return _isSelected; } set { _isSelected = value;  PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsSelected")); } }
+        [Ignore]
+        public bool IsExpanded { get { return _isExpanded; } set { _isExpanded = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsExpanded")); } }
 
         public NodeItem(NodeType type)
         {
             Type = type;
             this.Items = new List<NodeItem>();
+            if (type == NodeType.Schema || type == NodeType.Tables)
+                IsExpanded = true;
         }
+
+        public event PropertyChangedEventHandler PropertyChanged;
     }
 }
