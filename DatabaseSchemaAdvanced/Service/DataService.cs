@@ -17,7 +17,7 @@ namespace DatabaseSchemaAdvanced.Service
     {
         public void ExportSchemaToCsv(List<NodeItem> columns, string filePath)
         {
-            using (var writer = new StreamWriter(filePath))
+            using (var writer = new StreamWriter(new FileStream(filePath, FileMode.Create), Encoding.GetEncoding("iso-8859-1")))
             {
                 using (var csv = new CsvWriter(writer))
                 {
@@ -29,7 +29,7 @@ namespace DatabaseSchemaAdvanced.Service
 
         public List<NodeItem> ImportSchemaFromCsv(string filePath)
         {
-            using (var reader = new StreamReader(filePath))
+            using (var reader = new StreamReader(filePath, Encoding.Default))
             {
                 using (var csv = new CsvReader(reader))
                 {
@@ -143,9 +143,8 @@ namespace DatabaseSchemaAdvanced.Service
 
                     catch (Exception oex)
                     {
-                        //retValue = true;
                         //Logging.Logger.append("ERREUR: " + oex.Message, Logging.Logger.FATAL);
-                        throw oex;
+                        //throw oex;
                     }
                 }
                 connection.Close();

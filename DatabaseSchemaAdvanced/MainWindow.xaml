@@ -41,7 +41,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <GroupBox Grid.Row="1" Header="Connection settings" FontSize="14" Margin="10">
+        <GroupBox Grid.Row="1" Header="Connection settings" FontSize="14" Margin="10" IsEnabled="{Binding IsCommandEnabled}">
             <Grid Grid.Row="1" Name="ConectionPanel" Margin="10">
                 <Grid.RowDefinitions>
                     <RowDefinition/>
@@ -108,7 +108,7 @@
                     <ColumnDefinition Width="20"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <GroupBox Grid.Row="1" Header="Tables" FontSize="14">
+            <GroupBox Grid.Row="1" Header="Tables" FontSize="14" IsEnabled="{Binding IsCommandEnabled}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -135,7 +135,7 @@
                     
                 </GroupBox>
 
-                <GroupBox Grid.Column="2" Header="{Binding SelectedTable.Name,FallbackValue=Selected table}" Grid.Row="1" FontSize="14">
+            <GroupBox Grid.Column="2" Header="{Binding SelectedTable.Name,FallbackValue=Selected table}" Grid.Row="1" FontSize="14" IsEnabled="{Binding IsCommandEnabled}">
                     <Grid Grid.Column="2" Name="TablePanel" Grid.Row="1">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -164,7 +164,7 @@
                                                 <ColumnDefinition/>
                                             </Grid.ColumnDefinitions>
                                             <Label Content="{Binding Name}" Background="Gainsboro"/>
-                                            <TextBox Grid.Column="1" Text="{Binding Description}"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Description}" MaxLength="100"/>
                                         </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

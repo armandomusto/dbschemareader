@@ -1,29 +1,18 @@
-﻿-- ================================================
--- Template generated from Template Explorer using:
--- Create Procedure (New Menu).SQL
---
--- Use the Specify Values for Template Parameters 
--- command (Ctrl-Shift-M) to fill in the parameter 
--- values below.
---
--- This block of comments will not be included in
--- the definition of the procedure.
--- ================================================
-SET ANSI_NULLS ON
+﻿SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
--- Author:		<Author,,Name>
--- Create date: <Create Date,,>
+-- Author:		<Armando Musto>
+-- Create date: <15/01/2019>
 -- Description:	<Description,,>
 -- =============================================
-CREATE PROCEDURE SetColumnDescription
+ALTER PROCEDURE [dbo].[SetColumnDescription]
 	-- Add the parameters for the stored procedure here
 	@schemaName sysname, 
 	@tableName sysname, 
 	@columnName sysname, 
-	@description sql_variant
+	@description varchar(100)=NULL
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -32,10 +21,9 @@ BEGIN
 
     If Exists (Select 1 From fn_listextendedproperty('MS_Description', 'SCHEMA', @schemaName, 'TABLE', @tableName, 'COLUMN', @columnName))
 		EXEC sys.sp_updateextendedproperty @name=N'MS_Description', @value=@description , @level0type=N'SCHEMA',@level0name=@schemaName, @level1type=N'TABLE',@level1name=@tableName, @level2type=N'COLUMN',@level2name=@columnName
-	else If (Not @description Is Null) And (Not @description = '')
+	else If (ISNULL(@description,'')<>'')
 		EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=@description , @level0type=N'SCHEMA',@level0name=@schemaName, @level1type=N'TABLE',@level1name=@tableName, @level2type=N'COLUMN',@level2name=@columnName
 END
-GO
 
 --Read extended properties
 --SELECT 

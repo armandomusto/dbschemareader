@@ -47,11 +47,12 @@ namespace DatabaseSchemaAdvanced.ViewModel
         NodeItem _selectedTable;
         bool _isLoadingSchema;
         bool _isSchemaLoaded;
+        bool _isCommandEnabled = true;
         string _filter;
 
         #region Parameters
         public List<DbProvider> DbProviders { get; set; }
-        public DbProvider SelectedDbProvider { get { return _selectedProvider; } set { Set<DbProvider>(ref _selectedProvider, value, "SelectedDbProvider"); } }
+        public DbProvider SelectedDbProvider { get { return _selectedProvider; } set { Set<DbProvider>(ref _selectedProvider, value, "SelectedDbProvider"); ClearParameters(); } }
         public string Host { get { return _host; } set { Set<string>(ref _host, value, "Host"); } }
         public string Database { get { return _database; } set { Set<string>(ref _database, value, "Database"); } }
         public string User { get { return _user; } set { Set<string>(ref _user, value, "User"); } }
@@ -64,6 +65,7 @@ namespace DatabaseSchemaAdvanced.ViewModel
         public NodeItem SelectedTable { get { return _selectedTable; } set { Set<NodeItem>(ref _selectedTable, value, "SelectedTable");} }
         public bool IsLoadingSchema { get { return _isLoadingSchema; } set { Set<bool>(ref _isLoadingSchema, value, "IsLoadingSchema"); } }
         public bool IsSchemaLoaded { get { return _isSchemaLoaded; } set { Set<bool>(ref _isSchemaLoaded, value, "IsSchemaLoaded"); } }
+        public bool IsCommandEnabled { get { return _isCommandEnabled; } set { Set<bool>(ref _isCommandEnabled, value, "IsCommandEnabled"); } }
         public string Filter { get { return _filter; } set { Set<string>(ref _filter, value, "Filter");} }
         #endregion
 
@@ -101,6 +103,15 @@ namespace DatabaseSchemaAdvanced.ViewModel
             SearchTableCommand = new RelayCommand(SearchTable);
         }
 
+        private void ClearParameters()
+        {
+            Host = String.Empty;
+            Database = String.Empty;
+            User = String.Empty;
+            Password = String.Empty;
+            SchemaOwner = String.Empty;
+        }
+
         private void SearchTable()
         {
             SelectedNodeItem = Schemas.Flatten(a => a.Items).Where(a => a.Type == NodeType.Table).ToList().FirstOrDefault(a => a.Name.Contains(Filter));
@@ -116,38 +127,90 @@ namespace DatabaseSchemaAdvanced.ViewModel
 
         private void ImportFromCsv()
         {
-            if(_databaseSchema != null)
+            try
             {
-                OpenFileDialog dialog = new OpenFileDialog();
-                dialog.Filter = "CSV file|*.csv";
-                if (dialog.ShowDialog().Value)
+                if (_databaseSchema != null)
                 {
-                    List<NodeItem> columns = _dataService.ImportSchemaFromCsv(dialog.FileName);
-                    var tables = columns.GroupBy(a => a.Table);
-                    foreach(var table in tables)
+                    OpenFileDialog dialog = new OpenFileDialog();
+                    dialog.Filter = "CSV file|*.csv";
+                    if (dialog.ShowDialog().Value)
                     {
-                        foreach(var column in table)
+                        Task tsk = new Task(() =>
                         {
-                            var node = Schemas.Flatten(a => a.Items).Where(a => a.Type == NodeType.Column).FirstOrDefault( a => a.Name == column.Name);
-                            node.Description = column.Description;
-                        }
+                            IsLoadingSchema = true;
+                            IsSchemaLoaded = false;
+                            IsCommandEnabled = false;
+                            List<NodeItem> columns =  _dataService.ImportSchemaFromCsv(dialog.FileName);
+                            var tables = columns.GroupBy(a => a.Table);
+                            foreach (var table in tables)
+                            {
+                                foreach (var column in table)
+                                {
+                                    if (String.IsNullOrEmpty(column.Name))
+                                        continue;
+                                    string columnName = column.Name.ToUpper();
+                                    var node = Schemas.Flatten(a => a.Items).Where(a => a.Type == NodeType.Column && a.Table == column.Table).FirstOrDefault(a => a.Name.ToUpper() == columnName);
+                                    if (node == null)
+                                        continue;
+                                    node.Description = column.Description;
+                                }
+                            }
+                            RaisePropertyChanged(() => Schemas);
+                            IsLoadingSchema = false;
+                            IsSchemaLoaded = true;
+                            IsCommandEnabled = true;
+                        });
+                        tsk.Start();
                     }
-                    RaisePropertyChanged(() => Schemas);
-                    ExportToCsvCommand.RaiseCanExecuteChanged();
-                    ImportFromCsvCommand.RaiseCanExecuteChanged();
-                    UpdateSchemaCommand.RaiseCanExecuteChanged();
                 }
             }
+            catch (Exception ex)
+            {
+                IsLoadingSchema = false;
+                IsSchemaLoaded = true;
+                MessageBox.Show(ex.Message);
+            }
+            
         }
 
         private void ExportToCsv()
         {
-            List<NodeItem> columns = Schemas.Flatten(a => a.Items).Where(a => a.Type == NodeType.Column).ToList();
-            SaveFileDialog dialog = new SaveFileDialog();
-            dialog.Filter = "CSV file|*.csv";
-            if(dialog.ShowDialog().Value)
+            try
             {
-                _dataService.ExportSchemaToCsv(columns, dialog.FileName);
+                Task tsk = new Task(() =>
+                {
+                    IsLoadingSchema = true;
+                    IsSchemaLoaded = false;
+                    IsCommandEnabled = false;
+                    List<NodeItem> tables = Schemas.Flatten(a => a.Items).Where(a => a.Type == NodeType.Table).ToList();
+                    List<NodeItem> columns = new List<NodeItem>();
+                    foreach (var item in tables)
+                    {
+                        NodeItem table = new NodeItem(NodeType.Table);
+                        table.Table = item.Name;
+                        columns.Add(table);
+                        //var tableColumns = Schemas.Flatten(a => a.Items).Where(a => a.Type == NodeType.Column && a.Table == item.Table);
+                        columns.AddRange(item.Items);
+                    }
+                    SaveFileDialog dialog = new SaveFileDialog();
+                    dialog.Filter = "CSV file|*.csv";
+                    if (dialog.ShowDialog().Value)
+                    {
+                        _dataService.ExportSchemaToCsv(columns, dialog.FileName);
+                    }
+                    IsLoadingSchema = false;
+                    IsSchemaLoaded = true;
+                    IsCommandEnabled = true;
+                });
+                tsk.Start();
+                
+            }
+            catch (Exception ex)
+            {
+                IsLoadingSchema = false;
+                IsSchemaLoaded = true;
+                IsCommandEnabled = true;
+                MessageBox.Show(ex.Message);
             }
         }
 
@@ -158,10 +221,28 @@ namespace DatabaseSchemaAdvanced.ViewModel
 
         private void UpdateSchema()
         {
-            //var rdr = new DatabaseReader(ConnectionString, SelectedDbProvider.Provider);
-            //rdr.
-            List<NodeItem> columns = Schemas.Flatten(a => a.Items).Where(a => a.Type == NodeType.Column).ToList();
-            _dataService.SetColumnsDescriptionProperties(ConnectionString, columns, SelectedDbProvider.Type);
+            try
+            {
+                Task tsk = new Task(() =>
+                {
+                    IsLoadingSchema = true;
+                    IsSchemaLoaded = false;
+                    IsCommandEnabled = false;
+                    List<NodeItem> columns = Schemas.Flatten(a => a.Items).Where(a => a.Type == NodeType.Column).ToList();
+                    _dataService.SetColumnsDescriptionProperties(ConnectionString, columns, SelectedDbProvider.Type);
+                    IsLoadingSchema = false;
+                    IsSchemaLoaded = true;
+                    IsCommandEnabled = true;
+                });
+                tsk.Start();
+            }
+            catch (Exception ex)
+            {
+                IsLoadingSchema = false;
+                IsSchemaLoaded = true;
+                IsCommandEnabled = true;
+                MessageBox.Show(ex.Message);
+            }
         }
         
         private void ReadSchema()
@@ -199,7 +280,11 @@ namespace DatabaseSchemaAdvanced.ViewModel
             }
             catch (Exception ex)
             {
+                IsLoadingSchema = false;
+                IsSchemaLoaded = false;
+                IsCommandEnabled = true;
                 //Logging.Logger.append(ex.Message, Logging.Logger.ERROR);
+                MessageBox.Show(ex.Message);
             }
         }
 
@@ -207,7 +292,7 @@ namespace DatabaseSchemaAdvanced.ViewModel
         {
             IsLoadingSchema = true;
             IsSchemaLoaded = false;
-            
+            IsCommandEnabled = false;
             var rdr = new DatabaseReader(ConnectionString, SelectedDbProvider.Provider);
             rdr.Owner = SchemaOwner;
             //rdr.ReaderProgress += Rdr_ReaderProgress;
@@ -222,11 +307,13 @@ namespace DatabaseSchemaAdvanced.ViewModel
                 //Schemas = new ObservableCollection<NodeItem>(SchemaToTree.GenerateTreeList(tables));
                 RaisePropertyChanged(() => Schemas);
                 IsLoadingSchema = false;
+                IsCommandEnabled = true;
             }
             catch (Exception ex)
             {
                 IsLoadingSchema = false;
                 IsSchemaLoaded = false;
+                IsCommandEnabled = true;
                 MessageBox.Show(ex.Message);
             }
             
